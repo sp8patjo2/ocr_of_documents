@@ -1,8 +1,12 @@
 import os
 import argparse
 import openai
+from openai import OpenAI
 import base64
 
+def encode_image(image_path):
+    with open(image_path,"rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
 
 
 def get_api_details():
@@ -19,31 +23,24 @@ def get_api_details():
     
     return api_key, org_id
 
-def upload_image(file_path):
-    # Ladda upp bilden och få en fil-ID
-    with open(file_path, "rb") as image_file:
-        response = openai.File.create(
-            file=image_file,
-            purpose='vision'
-        )
-    return response['id']
 
-def interpret_image(file_id):
+def interpret_image(client,image_local):
+    image_url = f"data:image/jpeg;base64,{encode_image(image_local)}"
+    
     # Använd file_id i din förfrågan
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-4-vision-preview",
         messages=[
             {
                 "role": "user",
                 "content": [
                     {
-                        "type": "text", "text": "What text is in this image?"
+                        "type": "text", 
+                        "text": "What text is in this image?"
                     },
                     {
-                        "type": "image",
-                        "image": {
-                            "file_id": file_id
-                        }
+                        "type": "image_url",
+                        "image_url": {"url": image_url }
                     },
                 ],
             }
@@ -70,20 +67,15 @@ def main():
 
     openai.api_key = api_key
     openai.organization = org_id
+    
+    client = OpenAI()
 
-    file_id = None
 
-    try:
-        file_id = upload_image(args.file)
-        result  = interpret_image(file_id)
-        print(result)
+    result  = interpret_image(client,args.file)
+    print(result)
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
-    finally:
-        if file_id:
-            delete_file(file_id)
+
 
 if __name__ == "__main__":
     main()
