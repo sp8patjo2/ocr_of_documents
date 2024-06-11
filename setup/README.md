@@ -13,5 +13,9 @@ conda install -c conda-forge pytesseract
 conda install -c conda-forge pillow
 
 
+# installera andra
+pip install -r setup/requirements.txt
+
+
 
 

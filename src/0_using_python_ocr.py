@@ -3,12 +3,6 @@ from PIL import Image
 import argparse
 
 def ocr_image(image_path):
-    """
-    Läser text från en bildfil med Tesseract OCR.
-    
-    :param image_path: Sökvägen till bildfilen
-    :return: Texten som extraherats från bilden
-    """
     # Öppna bilden
     image = Image.open(image_path)
     
