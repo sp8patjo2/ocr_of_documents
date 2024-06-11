@@ -39,7 +39,7 @@ ett enkelt program som läser en bild och genererar en text med `pytesseract`
 src/0_using_python_ocr.py --in=image/file.png --out=resultat/out.txt
 ```
 
-**src/5_use_gpt4-vision.py**
+**src/5_use_gpt4-vision__jpg_to_json.py**
 
 ett enkelt program som använder `gpt-4-vision-preview`
 
