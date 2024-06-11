@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 
-
 def get_api_details():
     api_key = os.getenv("OPENAI_API_KEY")
     org_id = os.getenv("OPENAI_ORGID")
@@ -39,7 +38,7 @@ def generate_image_url(image_path):
 
 def get_response(client, image_url,instructions):
     response = client.chat.completions.create(
-        model='gpt-4-vision-preview', 
+        model='gpt-4o', 
         messages=[
             {
                 "role": "user",
@@ -70,13 +69,14 @@ def save_markdown_to_file(markdown_content, output_file):
     print(f"Markdown content saved to {output_file}")
 
 
+def generate_infix(response):
+    model_name = response.model
+    tokens_used = response.usage.total_tokens
+    return f"_model_{model_name}_tokens_{tokens_used}"
+
+
 def main():
     load_dotenv(override=True) # use .env ... and overwrite, .env rulez
-    
-    #for key, value in os.environ.items():
-    #    if key.startswith("OPENAI_"):  # Filtrera för att bara se dina specifika variabler
-    #       print(f"{key}={value}")
-    
     
     parser = argparse.ArgumentParser(description="Process an image and save the extracted markdown data.")
     parser.add_argument('--from', dest='source_image', default='images/test1_image.jpg', help="Path to the image file")
@@ -89,17 +89,21 @@ def main():
     
     instructions = """Return a markdown with the texts in the image.
     Create a table with the layout, and each word at the approximate place in the table.
-    If any word is higlighted in the image with a square make it bold in the markdown text.
+    If any word is highlighted in the image with a square make it bold in the markdown text.
     Only return the markdown!
     """
     response = get_response(client, image_url, instructions)
     markdown_content = extract_markdown(response)
 
     if args.output_file:
-        output_file = args.output_file
+        base_output_file = args.output_file
     else:
         filename_without_extension = os.path.splitext(os.path.basename(args.source_image))[0]
-        output_file = f"{filename_without_extension}.md"
+        base_output_file = f"{filename_without_extension}.md"
+
+    infix = generate_infix(response)
+    name, ext = os.path.splitext(base_output_file)
+    output_file = f"{name}__{infix}{ext}"
 
     save_markdown_to_file(markdown_content, output_file)
 
