@@ -1,9 +1,10 @@
-import base64
 import os
+import base64
 import argparse
 from dotenv import load_dotenv
-
 from openai import OpenAI
+
+
 
 def get_api_details():
     api_key = os.getenv("OPENAI_API_KEY")
@@ -17,17 +18,24 @@ def get_api_details():
     
     return api_key, org_id
 
+
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
+
 def create_client(api_key, org_id):
-    print(f"connecting to OpenAI with api-key {api_key} and orgid: {org_id} ")
+    print(f"connecting to OpenAI with api-key: ...{api_key[-5:]} and orgid: ...{org_id[-5:]}")
+    if org_id[-5:] != "7v5uQ":
+        raise Exception(f"Error: using the wrong orgid: {org_id}")
+    
     return OpenAI(api_key=api_key, organization=org_id)
+
 
 def generate_image_url(image_path):
     encoded_image = encode_image(image_path)
     return f"data:image/jpeg;base64,{encoded_image}"
+
 
 def get_response(client, image_url,instructions):
     response = client.chat.completions.create(
@@ -49,9 +57,11 @@ def get_response(client, image_url,instructions):
     )
     return response
 
+
 def extract_markdown(response):
     markdown_content = response.choices[0].message.content
     return markdown_content
+
 
 def save_markdown_to_file(markdown_content, output_file):
     with open(output_file, 'w') as file:
@@ -59,8 +69,16 @@ def save_markdown_to_file(markdown_content, output_file):
 
     print(f"Markdown content saved to {output_file}")
 
+
 def main():
-    load_dotenv() # dra in .env
+    load_dotenv(override=True) # use .env ... and overwrite, .env rulez
+    
+    for key, value in os.environ.items():
+        if key.startswith("OPENAI_"):  # Filtrera för att bara se dina specifika variabler
+           print(f"{key}={value}")
+    
+    import sys
+    sys.exit(0)
     
     parser = argparse.ArgumentParser(description="Process an image and save the extracted markdown data.")
     parser.add_argument('--from', dest='source_image', default='images/test1_image.jpg', help="Path to the image file")

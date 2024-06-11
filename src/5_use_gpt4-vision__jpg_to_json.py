@@ -29,7 +29,10 @@ def encode_image(image_path):
 
 
 def create_client(api_key, org_id):
-    print(f"connecting to OpenAI with api-key {api_key} and orgid: {org_id} ")
+    print(f"connecting to OpenAI with api-key: ...{api_key[-5:]} and orgid: ...{org_id[-5:]}")
+    if org_id[-5:] != "7v5uQ":
+        raise Exception(f"Error: using the wrong orgid: {org_id}")
+
     return OpenAI(api_key=api_key, organization=org_id)
 
 
@@ -77,7 +80,7 @@ def save_json_to_file(json_data, output_file):
 
 
 def main():
-    load_dotenv() # dra in .env
+    load_dotenv(override=True) # use .env ... and overwrite, .env rulez
     
     parser = argparse.ArgumentParser(description="Process an image and save the extracted JSON data.")
     parser.add_argument('--from', dest='source_image', default='images/test1_image.jpg', help="Path to the image file")
