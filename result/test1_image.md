@@ -1,6 +1,3 @@
----
-a_modified: 2024-06-11
----
 | | **Arkiv** | och ta emot | Visa | Hjälp |
 |-----|------|--------------|------|------|
 | Ny e-post | Nytt möte | | | |
