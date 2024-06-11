@@ -1,0 +1,40 @@
+{
+    "interface_language": "Swedish",
+    "highlighted_feature": "Archive",
+    "visible_sections": [
+        {
+            "name": "Favorites",
+            "items": [
+                "Inbox",
+                "Sent Items",
+                "Deleted Items"
+            ]
+        },
+        {
+            "name": "Folders",
+            "items": [
+                "Drafts",
+                "Sent Items",
+                "Archive",
+                "Inbox",
+                "Junk Email",
+                "Conversation History",
+                "Outbox",
+                "RSS-feeds",
+                "Search Folders"
+            ]
+        },
+        {
+            "name": "Groups",
+            "items": []
+        }
+    ],
+    "email_actions": [
+        "New Email",
+        "New Meeting",
+        "Share in Teams"
+    ],
+    "email_sorting": "After Date",
+    "email_filter": "All",
+    "unread_filter": "Unread"
+}
