@@ -73,12 +73,10 @@ def save_markdown_to_file(markdown_content, output_file):
 def main():
     load_dotenv(override=True) # use .env ... and overwrite, .env rulez
     
-    for key, value in os.environ.items():
-        if key.startswith("OPENAI_"):  # Filtrera för att bara se dina specifika variabler
-           print(f"{key}={value}")
+    #for key, value in os.environ.items():
+    #    if key.startswith("OPENAI_"):  # Filtrera för att bara se dina specifika variabler
+    #       print(f"{key}={value}")
     
-    import sys
-    sys.exit(0)
     
     parser = argparse.ArgumentParser(description="Process an image and save the extracted markdown data.")
     parser.add_argument('--from', dest='source_image', default='images/test1_image.jpg', help="Path to the image file")
