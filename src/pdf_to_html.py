@@ -76,7 +76,7 @@ def extract_images_and_text(pdf_path, output_folder):
     
     # Debugging print to check bbox values
     for element in elements:
-        print(f"Element type: {element['type']}, bbox: {element['bbox']}")
+        print(f"Element type: {element['type']}, content: {element.get('content', '')}, bbox: {element['bbox']}")
     
     # Ensure all elements have valid bbox before sorting
     elements = [e for e in elements if isinstance(e["bbox"], (list, tuple)) and len(e["bbox"]) >= 2]
