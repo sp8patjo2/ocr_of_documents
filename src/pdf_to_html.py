@@ -62,7 +62,7 @@ def main(pdf_path):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert PDF to HTML with extracted images.")
-    parser.add_argument("--pdf", required=True, help="Path to the PDF file.")
+    parser.add_argument("--pdf", required=True,default='images/test1.pdf' help="Path to the PDF file.")
     args = parser.parse_args()
     
     main(args.pdf)
