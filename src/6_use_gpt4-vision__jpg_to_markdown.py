@@ -36,9 +36,10 @@ def generate_image_url(image_path):
     return f"data:image/jpeg;base64,{encoded_image}"
 
 
-def get_response(client, image_url,instructions):
+def get_response(client, base64_image_url,instructions):
     response = client.chat.completions.create(
         model='gpt-4o', 
+        #model='gpt-4-vision-preview',
         messages=[
             {
                 "role": "user",
@@ -47,12 +48,12 @@ def get_response(client, image_url,instructions):
                      "text": instructions},
                     {
                         "type": "image_url",
-                        "image_url": {"url": image_url}
+                        "image_url": {"url": base64_image_url}
                     }
                 ],
             }
         ],
-        max_tokens=2500,
+        max_tokens=4196,
     )
     return response
 
@@ -85,14 +86,14 @@ def main():
 
     api_key, org_id = get_api_details()
     client = create_client(api_key, org_id)
-    image_url = generate_image_url(args.source_image)
+    base64_image_url = generate_image_url(args.source_image)
     
     instructions = """Return a markdown with the texts in the image.
     Create a table with the layout, and each word at the approximate place in the table.
     If any word is highlighted in the image with a square make it bold in the markdown text.
     Only return the markdown!
     """
-    response = get_response(client, image_url, instructions)
+    response = get_response(client, base64_image_url, instructions)
     markdown_content = extract_markdown(response)
 
     if args.output_file:
