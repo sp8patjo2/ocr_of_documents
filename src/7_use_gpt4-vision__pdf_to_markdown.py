@@ -25,7 +25,7 @@ def encode_image(image_path):
 
 def create_client(api_key, org_id):
     print(f"connecting to OpenAI with api-key: ...{api_key[-5:]} and orgid: ...{org_id[-5:]}")
-    if org_id[-5:] != "7v5uQ":
+    if org_id[-5:] != "7v5uQ":  # FIXME - bara för att jag gör fel ibland ... detta är Mio(T)
         raise Exception(f"Error: using the wrong orgid: {org_id}")
     
     return OpenAI(api_key=api_key, organization=org_id)
