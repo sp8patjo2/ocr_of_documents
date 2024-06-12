@@ -52,7 +52,7 @@ def get_response(client, image_url,instructions):
                 ],
             }
         ],
-        max_tokens=2500,
+        max_tokens=4096,
     )
     return response
 
@@ -69,7 +69,7 @@ def save_markdown_to_file(markdown_content, output_file):
     print(f"Markdown content saved to {output_file}")
 
 
-def generate_infix(response):
+def generate_infix_name(response):
     model_name = response.model
     tokens_used = response.usage.total_tokens
     return f"_model_{model_name}_tokens_{tokens_used}"
@@ -84,15 +84,15 @@ def main():
     args = parser.parse_args()
 
     api_key, org_id = get_api_details()
-    client = create_client(api_key, org_id)
-    image_url = generate_image_url(args.source_image)
+    client          = create_client(api_key, org_id)
+    image_url       = generate_image_url(args.source_image)
     
     instructions = """Return a markdown with the texts in the image.
     Create a table with the layout, and each word at the approximate place in the table.
     If any word is highlighted in the image with a square make it bold in the markdown text.
     Only return the markdown!
     """
-    response = get_response(client, image_url, instructions)
+    response         = get_response(client, image_url, instructions)
     markdown_content = extract_markdown(response)
 
     if args.output_file:
@@ -101,7 +101,7 @@ def main():
         filename_without_extension = os.path.splitext(os.path.basename(args.source_image))[0]
         base_output_file = f"{filename_without_extension}.md"
 
-    infix = generate_infix(response)
+    infix = generate_infix_name(response)
     name, ext = os.path.splitext(base_output_file)
     output_file = f"{name}__{infix}{ext}"
 
