@@ -11,26 +11,29 @@ def save_image_as_jpeg(image_bytes, output_folder, image_filename):
     image.convert("RGB").save(jpeg_path, "JPEG")
     return jpeg_filename
 
-def extract_images(doc, page, block, output_folder, page_num, block_index):
+def extract_images(doc, page, output_folder, page_num):
     image_elements = []
-    xref = block["xref"]
+    image_list = page.get_images(full=True)
     
-    if not isinstance(xref, int):
-        raise TypeError(f"Expected xref to be an int, but got {type(xref).__name__}")
-    
-    base_image = doc.extract_image(xref)
-    image_bytes = base_image["image"]
-    image_filename = f"image_{page_num+1}_{block_index+1}.jpeg"
-    jpeg_filename = save_image_as_jpeg(image_bytes, output_folder, image_filename)
-    image_elements.append({
-        "type": "image",
-        "content": jpeg_filename,
-        "bbox": block["bbox"]
-    })
+    for img_index, img in enumerate(image_list):
+        xref = img[0]
+        
+        if not isinstance(xref, int):
+            raise TypeError(f"Expected xref to be an int, but got {type(xref).__name__}")
+        
+        base_image = doc.extract_image(xref)
+        image_bytes = base_image["image"]
+        image_filename = f"image_{page_num+1}_{img_index+1}.jpeg"
+        jpeg_filename = save_image_as_jpeg(image_bytes, output_folder, image_filename)
+        image_elements.append({
+            "type": "image",
+            "content": jpeg_filename,
+            "bbox": img[3]  # bbox is the fourth item in the image list tuple
+        })
     
     return image_elements
 
-def extract_text(block, block_index):
+def extract_text(block):
     text_elements = []
     text_lines = block["lines"]
     for line in text_lines:
@@ -49,12 +52,12 @@ def extract_elements_from_page(doc, page_num, output_folder):
     page = doc.load_page(page_num)
     blocks = page.get_text("dict")["blocks"]
     
-    for block_index, block in enumerate(blocks):
+    for block in blocks:
         if block["type"] == 0:  # Text block
-            text_elements = extract_text(block, block_index)
+            text_elements = extract_text(block)
             elements.extend(text_elements)
         elif block["type"] == 1:  # Image block
-            image_elements = extract_images(doc, page, block, output_folder, page_num, block_index)
+            image_elements = extract_images(doc, page, output_folder, page_num)
             elements.extend(image_elements)
         elif block["type"] == 2:  # Drawing block
             elements.append({"type": "drawing", "content": "Drawing content (not processed)", "bbox": block["bbox"]})
