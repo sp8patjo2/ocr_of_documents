@@ -11,32 +11,36 @@ def save_image_as_jpeg(image_bytes, output_folder, image_filename):
     image.convert("RGB").save(jpeg_path, "JPEG")
     return jpeg_filename
 
-def extract_images(doc, page_num, output_folder):
+def extract_images(doc, page, block, output_folder, page_num, block_index):
     image_elements = []
-    page = doc.load_page(page_num)
-    image_list = page.get_images(full=True)
+    xref = block["xref"]
     
-    for img_index, img in enumerate(image_list):
-        xref = img[0]
-        base_image = doc.extract_image(xref)
-        image_bytes = base_image["image"]
-        image_filename = f"image_{page_num+1}_{img_index+1}.jpeg"
-        jpeg_filename = save_image_as_jpeg(image_bytes, output_folder, image_filename)
-        image_elements.append({"type": "image", "content": jpeg_filename})
+    if not isinstance(xref, int):
+        raise TypeError(f"Expected xref to be an int, but got {type(xref).__name__}")
+    
+    base_image = doc.extract_image(xref)
+    image_bytes = base_image["image"]
+    image_filename = f"image_{page_num+1}_{block_index+1}.jpeg"
+    jpeg_filename = save_image_as_jpeg(image_bytes, output_folder, image_filename)
+    image_elements.append({
+        "type": "image",
+        "content": jpeg_filename,
+        "bbox": block["bbox"]
+    })
     
     return image_elements
 
-def extract_text(page):
+def extract_text(block, block_index):
     text_elements = []
-    blocks = page.get_text("dict")["blocks"]
-    
-    for block in blocks:
-        if block["type"] == 0:  # Text block
-            text_lines = block["lines"]
-            for line in text_lines:
-                spans = line["spans"]
-                for span in spans:
-                    text_elements.append({"type": "text", "content": span["text"]})
+    text_lines = block["lines"]
+    for line in text_lines:
+        spans = line["spans"]
+        for span in spans:
+            text_elements.append({
+                "type": "text",
+                "content": span["text"],
+                "bbox": block["bbox"]
+            })
     
     return text_elements
 
@@ -45,20 +49,17 @@ def extract_elements_from_page(doc, page_num, output_folder):
     page = doc.load_page(page_num)
     blocks = page.get_text("dict")["blocks"]
     
-    for block in blocks:
+    for block_index, block in enumerate(blocks):
         if block["type"] == 0:  # Text block
-            text_lines = block["lines"]
-            for line in text_lines:
-                spans = line["spans"]
-                for span in spans:
-                    elements.append({"type": "text", "content": span["text"]})
+            text_elements = extract_text(block, block_index)
+            elements.extend(text_elements)
         elif block["type"] == 1:  # Image block
-            image_elements = extract_images(doc, page_num, output_folder)
+            image_elements = extract_images(doc, page, block, output_folder, page_num, block_index)
             elements.extend(image_elements)
         elif block["type"] == 2:  # Drawing block
-            elements.append({"type": "drawing", "content": "Drawing content (not processed)"})
+            elements.append({"type": "drawing", "content": "Drawing content (not processed)", "bbox": block["bbox"]})
         elif block["type"] == 3:  # Unknown block
-            elements.append({"type": "unknown", "content": "Unknown content (not processed)"})
+            elements.append({"type": "unknown", "content": "Unknown content (not processed)", "bbox": block["bbox"]})
     
     return elements
 
@@ -69,6 +70,16 @@ def extract_images_and_text(pdf_path, output_folder):
     for page_num in range(len(doc)):
         page_elements = extract_elements_from_page(doc, page_num, output_folder)
         elements.extend(page_elements)
+    
+    # Debugging print to check bbox values
+    for element in elements:
+        print(f"Element type: {element['type']}, bbox: {element['bbox']}")
+    
+    # Ensure all elements have valid bbox before sorting
+    elements = [e for e in elements if isinstance(e["bbox"], (list, tuple)) and len(e["bbox"]) >= 2]
+
+    # Sort elements by their position (bbox)
+    elements.sort(key=lambda e: (e["bbox"][1], e["bbox"][0]))
     
     return elements
 
