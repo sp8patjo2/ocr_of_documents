@@ -188,6 +188,9 @@ def generate_html(pages_elements: List[List[Dict[str, Any]]], output_html_path: 
 
 
 def main() -> None:
+    """
+    parse a PDF-file, resulting a folder with one html and any images as jpeg-files / svg-files in the same folder.
+    """
     
     # init setup logging - read level from .env. Level "warning" is fallback
     log_level_str = os.getenv('LOG_LEVEL', 'WARNING').upper()
