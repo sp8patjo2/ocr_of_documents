@@ -50,8 +50,8 @@ def extract_elements_from_page(doc, page_num, output_folder):
                     matching_element = find_matching_element(elements, y_pos, y_tolerance)
                     if matching_element:
                         matching_element["content"] += " " + span["text"]
-
                     else:
+
                         elements.append({
                             "type": "text",
                             "content": span["text"],
