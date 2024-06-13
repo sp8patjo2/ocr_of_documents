@@ -43,9 +43,10 @@ def generate_image_url(image_path):
 
 
 
-def get_response(client, image_url):
+def get_response(client, base64_image_url):
     response = client.chat.completions.create(
         model='gpt-4-vision-preview', 
+        #model='gpt-4-vision-preview',
         messages=[
             {
                 "role": "user",
@@ -53,7 +54,7 @@ def get_response(client, image_url):
                     {"type": "text", "text": "Return JSON document with data. Only return JSON not other text"},
                     {
                         "type": "image_url",
-                        "image_url": {"url": image_url}
+                        "image_url": {"url": base64_image_url}
                     }
                 ],
             }
@@ -89,8 +90,8 @@ def main():
 
     api_key, org_id = get_api_details()
     client = create_client(api_key, org_id)
-    image_url = generate_image_url(args.source_image)
-    response = get_response(client, image_url)
+    base64_image_url = generate_image_url(args.source_image)
+    response = get_response(client, base64_image_url)
     json_data = extract_json(response)
 
     if args.output_file:
