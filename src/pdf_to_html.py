@@ -130,8 +130,9 @@ def generate_html(pages_elements: List[List[Dict[str, Any]]], output_html_path: 
         html_content += f'<div class="page" id="page_{page_num+1}">'
         for element in elements:
             if element["type"] == "text":
-                font_size        = element["font_size"]
-                font             = element["font"]
+                font_size        = round(element["font_size"],1)
+                #font             = element["font"]
+                font             = "'Helvetica Neue', Helvetica, Arial, sans-serif"
                 content_fixed_nl = element["content"].replace("\n", "<br>")
                 html_content += f'<p style="font-size:{font_size}px; font-family:{font};">{content_fixed_nl}</p>'
             elif element["type"] == "image":
