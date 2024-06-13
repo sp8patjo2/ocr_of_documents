@@ -3,6 +3,21 @@ import os
 import argparse
 from PIL import Image
 from io import BytesIO
+import logging
+from dotenv import load_dotenv
+load_dotenv()  # Ladda variabler från .env-filen
+logger = None
+
+def setup_logger(log_level):
+    logger = logging.getLogger("pdf_to_html_converter")
+    logger.setLevel(log_level)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
+
 
 def save_image_as_jpeg(image_bytes, output_folder, image_filename):
     image = Image.open(BytesIO(image_bytes))
@@ -11,34 +26,37 @@ def save_image_as_jpeg(image_bytes, output_folder, image_filename):
     image.convert("RGB").save(jpeg_path, "JPEG")
     return jpeg_filename
 
+
 def extract_elements_from_page(doc, page_num, output_folder):
     elements = []
     page = doc.load_page(page_num)
     blocks = page.get_text("dict")["blocks"]
     
-    
-    sorted_blocks = sorted(blocks, key=lambda block: block["bbox"][1])  # for debug - sort on first Y coordinate, easier to compare if texts are in the correct order
-    for block in sorted_blocks:
-        debug2 = block["type"]
-        print(block["bbox"])
-        print(block["bbox"][1])
-    
-        
-        print(f"debug: block-type: {debug2}")
+    y_tolerance = 2  # Tolerans i y-led
+
+    def find_matching_element(elements, y_pos, y_tolerance):
+        for element in elements:
+            if element["type"] == "text" and abs(element["bbox"][1] - y_pos) <= y_tolerance:
+                return element
+        return None
+
+    for block in blocks:
         if block["type"] == 0:  # Text block
             text_lines = block["lines"]
             for line in text_lines:
                 spans = line["spans"]
                 for span in spans:
-                    debug = span["text"]
-                    print(f"debug - text i denna position är: \"{debug}\"")
-                    elements.append({
-                        "type": "text",
-                        "content": span["text"],
-                        "bbox": block["bbox"]
-                    })
-                    debug2 = block["bbox"][1]
-                    print(f"debug - y-position är: \"{debug2}\"")
+                    y_pos = block["bbox"][1]
+                    matching_element = find_matching_element(elements, y_pos, y_tolerance)
+                    if matching_element:
+                        matching_element["content"] += " " + span["text"]
+
+                    else:
+                        elements.append({
+                            "type": "text",
+                            "content": span["text"],
+                            "bbox": block["bbox"]
+                        })
 
     image_list = page.get_images(full=True)
     for img_index, img in enumerate(image_list):
@@ -61,7 +79,7 @@ def extract_elements_from_page(doc, page_num, output_folder):
             "bbox": [bbox.x0, bbox.y0, bbox.x1, bbox.y1]
         })
     
-    sorted_elements = sorted(elements, key=lambda elements: elements["bbox"][1])    
+    sorted_elements = sorted(elements, key=lambda element: element["bbox"][1])
     return sorted_elements
 
 
@@ -75,8 +93,6 @@ def extract_images_and_text(pdf_path, output_folder):
         pages_elements.append(page_elements)
     
     return pages_elements
-
-
 
 def generate_html(pages_elements, output_html_path):
     html_content = "<html><body>"
@@ -96,12 +112,19 @@ def generate_html(pages_elements, output_html_path):
         html_file.write(html_content)
 
 
-
 def main():
+    #setup logging    
+    log_level_str = os.getenv('LOG_LEVEL', 'WARNING').upper()
+    log_level = getattr(logging, log_level_str, logging.WARNING)
+    global logger
+    logger = setup_logger(log_level)
+
+    # parse arguments
     parser = argparse.ArgumentParser(description="Convert PDF to HTML with extracted images.")
     parser.add_argument("--pdf", default="images/test1.pdf", help="Path to the PDF file.")
     args = parser.parse_args()
 
+    # doit
     pdf_path = args.pdf
     base_name = os.path.splitext(os.path.basename(pdf_path))[0]
     output_folder = base_name
@@ -109,11 +132,12 @@ def main():
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
+    logger.info("Starting PDF to HTML conversion.")
     pages_elements = extract_images_and_text(pdf_path, output_folder)
     output_html_path = os.path.join(output_folder, f"{base_name}.html")
     
     generate_html(pages_elements, output_html_path)
-    print(f"HTML file created at: {output_html_path}")
+    logger.info(f"HTML file created at: {output_html_path}")
     
 if __name__ == "__main__":
     main()
