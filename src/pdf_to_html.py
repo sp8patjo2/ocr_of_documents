@@ -68,28 +68,34 @@ def extract_elements_from_page(doc, page_num, output_folder):
 
 def extract_images_and_text(pdf_path, output_folder):
     doc = fitz.open(pdf_path)
-    elements = []
+    pages_elements = []
     
     for page_num in range(len(doc)):
         page_elements = extract_elements_from_page(doc, page_num, output_folder)
-        elements.extend(page_elements)
+        pages_elements.append(page_elements)
     
-    return elements
+    return pages_elements
 
 
-def generate_html(elements, output_html_path):
+
+def generate_html(pages_elements, output_html_path):
     html_content = "<html><body>"
     
-    for element in elements:
-        if element["type"] == "text":
-            html_content += "<p>{}</p>".format(element['content'].replace('\n', '<br>'))
-        elif element["type"] == "image":
-            html_content += '<img src="{}" alt="{}"><br>'.format(element["content"], element["content"])
+    for page_num, elements in enumerate(pages_elements):
+        html_content += f'<div class="page" id="page_{page_num+1}">'
+        for element in elements:
+            if element["type"] == "text":
+                html_content += '<p>{}</p>'.format(element['content'].replace('\n', '<br>'))
+            elif element["type"] == "image":
+                html_content += '<img src="{}" alt="{}"><br>'.format(element["content"], element["content"])
+        html_content += '</div><div style="page-break-after: always;"></div>'
     
     html_content += "</body></html>"
     
     with open(output_html_path, "w", encoding="utf-8") as html_file:
         html_file.write(html_content)
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Convert PDF to HTML with extracted images.")
@@ -103,10 +109,10 @@ def main():
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
-    elements = extract_images_and_text(pdf_path, output_folder)
+    pages_elements = extract_images_and_text(pdf_path, output_folder)
     output_html_path = os.path.join(output_folder, f"{base_name}.html")
     
-    generate_html(elements, output_html_path)
+    generate_html(pages_elements, output_html_path)
     print(f"HTML file created at: {output_html_path}")
     
 if __name__ == "__main__":
