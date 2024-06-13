@@ -35,6 +35,17 @@ def save_image_as_jpeg(image_bytes: bytes, output_folder: str, image_filename: s
     return jpeg_filename
 
 
+def save_vector_as_svg(page: fitz.Page, block: Dict[str, Any], output_folder: str, svg_filename: str) -> str:
+    """
+    Saves the vector block as an SVG file in the specified output folder.
+    """
+    logger.warning("Patjo says: SVG is not tested. Please double check the result")
+    svg_path = os.path.join(output_folder, svg_filename)
+    with open(svg_path, "w") as svg_file:
+        svg_file.write(page.get_svg_image(block))
+    return svg_filename
+
+
 def find_matching_element(elements: List[Dict[str, Any]], y_pos: float, y_tolerance: float) -> Dict[str, Any]:
     """
     Finds a matching text element within a given y-coordinate tolerance.
@@ -86,9 +97,22 @@ def extract_image_elements_from_page(doc: fitz.Document, page: fitz.Page, page_n
         })
 
 
+def extract_vector_elements_from_page(page: fitz.Page, block: Dict[str, Any], page_num: int, output_folder: str, elements: List[Dict[str, Any]]) -> None:
+    """
+    Extracts vector elements from a PDF page and adds them to the elements list.
+    """
+    svg_filename = f"vector_{page_num+1}_{block['number']}.svg"
+    svg_path = save_vector_as_svg(page, block, output_folder, svg_filename)
+    elements.append({
+        "type"    : "vector",
+        "content" : svg_path,
+        "bbox"    : block["bbox"]
+    })
+
+
 def extract_elements_from_page(doc: fitz.Document, page_num: int, output_folder: str) -> List[Dict[str, Any]]:
     """
-    Extracts all elements (text and images) from a PDF page.
+    Extracts all elements (text, images, and vectors) from a PDF page.
     """
     elements = []
     page = doc.load_page(page_num)
@@ -99,6 +123,8 @@ def extract_elements_from_page(doc: fitz.Document, page_num: int, output_folder:
     for block in blocks:
         if block["type"] == 0:  # 0 = Text block
             extract_text_elements_from_page(block, elements, y_tolerance)
+        elif block["type"] == 2:  # 2 = Vector block
+            extract_vector_elements_from_page(page, block, page_num, output_folder, elements)
 
     extract_image_elements_from_page(doc, page, page_num, output_folder, elements)
 
@@ -130,13 +156,14 @@ def generate_html(pages_elements: List[List[Dict[str, Any]]], output_html_path: 
         html_content += f'<div class="page" id="page_{page_num+1}">'
         for element in elements:
             if element["type"] == "text":
-                font_size        = round(element["font_size"],1)
-                #font             = element["font"]
+                font_size        = round(element["font_size"], 1)
                 font             = "'Helvetica Neue', Helvetica, Arial, sans-serif"
                 content_fixed_nl = element["content"].replace("\n", "<br>")
                 html_content += f'<p style="font-size:{font_size}px; font-family:{font};">{content_fixed_nl}</p>'
             elif element["type"] == "image":
                 html_content += f'<img src="{element["content"]}" alt="{element["content"]}"><br>'
+            elif element["type"] == "vector":
+                html_content += f'<img src="{element["content"]}" alt="vector"><br>'
         html_content += '</div><div style="page-break-after: always;"></div>'
 
     html_content += "</body></html>"
