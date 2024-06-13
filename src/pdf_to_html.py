@@ -188,18 +188,19 @@ def generate_html(pages_elements: List[List[Dict[str, Any]]], output_html_path: 
 
 
 def main() -> None:
-    """
-    Main function to parse arguments and initiate the PDF to HTML conversion process.
-    """
+    
+    # init setup logging - read level from .env. Level "warning" is fallback
     log_level_str = os.getenv('LOG_LEVEL', 'WARNING').upper()
     log_level = getattr(logging, log_level_str, logging.WARNING)
     global logger
     logger = setup_logger(log_level)
 
+    # parse arguments, there is a default file set
     parser = argparse.ArgumentParser(description="Convert PDF to HTML with extracted images.")
     parser.add_argument("--pdf", default="images/test1.pdf", help="Path to the PDF file.")
     args = parser.parse_args()
 
+    # process file
     pdf_path = args.pdf
     base_name = os.path.splitext(os.path.basename(pdf_path))[0]
     output_folder = base_name
