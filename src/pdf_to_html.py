@@ -16,21 +16,29 @@ def extract_elements_from_page(doc, page_num, output_folder):
     page = doc.load_page(page_num)
     blocks = page.get_text("dict")["blocks"]
     
-    for block in blocks:
-        debug = block["type"]
-        print(f"debug: block-type: {debug}")
+    
+    sorted_blocks = sorted(blocks, key=lambda block: block["bbox"][1])  # for debug - sort on first Y coordinate, easier to compare if texts are in the correct order
+    for block in sorted_blocks:
+        debug2 = block["type"]
+        print(block["bbox"])
+        print(block["bbox"][1])
+    
+        
+        print(f"debug: block-type: {debug2}")
         if block["type"] == 0:  # Text block
             text_lines = block["lines"]
             for line in text_lines:
                 spans = line["spans"]
                 for span in spans:
                     debug = span["text"]
-                    print("debug - text i denna position är: \"{debug}\"")
+                    print(f"debug - text i denna position är: \"{debug}\"")
                     elements.append({
                         "type": "text",
                         "content": span["text"],
                         "bbox": block["bbox"]
                     })
+                    debug2 = block["bbox"][1]
+                    print(f"debug - y-position är: \"{debug2}\"")
 
     image_list = page.get_images(full=True)
     for img_index, img in enumerate(image_list):
@@ -53,7 +61,10 @@ def extract_elements_from_page(doc, page_num, output_folder):
             "bbox": [bbox.x0, bbox.y0, bbox.x1, bbox.y1]
         })
     
-    return elements
+    sorted_elements = sorted(elements, key=lambda elements: elements["bbox"][1])    
+    return sorted_elements
+
+
 
 def extract_images_and_text(pdf_path, output_folder):
     doc = fitz.open(pdf_path)
