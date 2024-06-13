@@ -24,6 +24,7 @@ def setup_logger(log_level: int) -> logging.Logger:
     return logger
 
 
+
 def save_image_as_jpeg(image_bytes: bytes, output_folder: str, image_filename: str) -> str:
     """
     Saves the given image bytes as a JPEG file in the specified output folder.
@@ -33,6 +34,7 @@ def save_image_as_jpeg(image_bytes: bytes, output_folder: str, image_filename: s
     jpeg_path = os.path.join(output_folder, jpeg_filename)
     image.convert("RGB").save(jpeg_path, "JPEG")
     return jpeg_filename
+
 
 
 def save_vector_as_svg(page: fitz.Page, block: Dict[str, Any], output_folder: str, svg_filename: str) -> str:
@@ -46,6 +48,7 @@ def save_vector_as_svg(page: fitz.Page, block: Dict[str, Any], output_folder: st
     return svg_filename
 
 
+
 def find_matching_element(elements: List[Dict[str, Any]], y_pos: float, y_tolerance: float) -> Dict[str, Any]:
     """
     Finds a matching text element within a given y-coordinate tolerance.
@@ -54,6 +57,7 @@ def find_matching_element(elements: List[Dict[str, Any]], y_pos: float, y_tolera
         if element["type"] == "text" and abs(element["bbox"][1] - y_pos) <= y_tolerance:
             return element
     return None
+
 
 
 def extract_text_elements_from_page(block: Dict[str, Any], elements: List[Dict[str, Any]], y_tolerance: float) -> None:
@@ -78,6 +82,7 @@ def extract_text_elements_from_page(block: Dict[str, Any], elements: List[Dict[s
                 })
 
 
+
 def extract_image_elements_from_page(doc: fitz.Document, page: fitz.Page, page_num: int, output_folder: str, elements: List[Dict[str, Any]]) -> None:
     """
     Extracts image elements from a PDF page and adds them to the elements list.
@@ -85,16 +90,17 @@ def extract_image_elements_from_page(doc: fitz.Document, page: fitz.Page, page_n
     image_list = page.get_images(full=True)
     for img_index, img in enumerate(image_list):
         xref = img[0]
-        base_image = doc.extract_image(xref)
-        image_bytes = base_image["image"]
+        base_image     = doc.extract_image(xref)
+        image_bytes    = base_image["image"]
         image_filename = f"image_{page_num+1}_{img_index+1}.jpeg"
-        jpeg_filename = save_image_as_jpeg(image_bytes, output_folder, image_filename)
+        jpeg_filename  = save_image_as_jpeg(image_bytes, output_folder, image_filename)
         bbox = page.get_image_bbox(img)
         elements.append({
             "type"    : "image",
             "content" : jpeg_filename,
             "bbox"    : [bbox.x0, bbox.y0, bbox.x1, bbox.y1]
         })
+
 
 
 def extract_vector_elements_from_page(page: fitz.Page, block: Dict[str, Any], page_num: int, output_folder: str, elements: List[Dict[str, Any]]) -> None:
@@ -110,6 +116,7 @@ def extract_vector_elements_from_page(page: fitz.Page, block: Dict[str, Any], pa
     })
 
 
+
 def extract_elements_from_page(doc: fitz.Document, page_num: int, output_folder: str) -> List[Dict[str, Any]]:
     """
     Extracts all elements (text, images, and vectors) from a PDF page.
@@ -121,8 +128,11 @@ def extract_elements_from_page(doc: fitz.Document, page_num: int, output_folder:
     y_tolerance = 2  # Tolerance in y-direction
 
     for block in blocks:
-        if block["type"] == 0:  # 0 = Text block
+        if block["type"]   == 0:  # 0 = Text block
             extract_text_elements_from_page(block, elements, y_tolerance)
+
+         # the missing type == 1 is image, and is handled elsewhere
+
         elif block["type"] == 2:  # 2 = Vector block
             extract_vector_elements_from_page(page, block, page_num, output_folder, elements)
 
@@ -130,6 +140,7 @@ def extract_elements_from_page(doc: fitz.Document, page_num: int, output_folder:
 
     sorted_elements = sorted(elements, key=lambda element: element["bbox"][1])
     return sorted_elements
+
 
 
 def extract_images_and_text(pdf_path: str, output_folder: str) -> List[List[Dict[str, Any]]]:
@@ -146,6 +157,7 @@ def extract_images_and_text(pdf_path: str, output_folder: str) -> List[List[Dict
     return pages_elements
 
 
+
 def generate_html(pages_elements: List[List[Dict[str, Any]]], output_html_path: str) -> None:
     """
     Generates an HTML file from the extracted PDF elements and saves it to the specified path.
@@ -159,11 +171,14 @@ def generate_html(pages_elements: List[List[Dict[str, Any]]], output_html_path: 
                 font_size        = round(element["font_size"], 1)
                 font             = "'Helvetica Neue', Helvetica, Arial, sans-serif"
                 content_fixed_nl = element["content"].replace("\n", "<br>")
-                html_content += f'<p style="font-size:{font_size}px; font-family:{font};">{content_fixed_nl}</p>'
+                html_content    += f'<p style="font-size:{font_size}px; font-family:{font};">{content_fixed_nl}</p>'
+                
             elif element["type"] == "image":
                 html_content += f'<img src="{element["content"]}" alt="{element["content"]}"><br>'
+                
             elif element["type"] == "vector":
                 html_content += f'<img src="{element["content"]}" alt="vector"><br>'
+                
         html_content += '</div><div style="page-break-after: always;"></div>'
 
     html_content += "</body></html>"
