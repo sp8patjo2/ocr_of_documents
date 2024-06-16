@@ -53,7 +53,7 @@ def get_response(client, base64_image_url,instructions):
                 ],
             }
         ],
-        max_tokens=4196,
+        max_tokens=4096,
     )
     return response
 
