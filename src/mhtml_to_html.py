@@ -1,6 +1,7 @@
 import os
 import argparse
-from mhtml2html import parse_mhtml
+from email import policy
+from email.parser import BytesParser
 from bs4 import BeautifulSoup
 from PIL import Image
 import io
@@ -10,26 +11,27 @@ def create_folder(folder_name):
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
 
-def save_resources(parts, folder_name):
+def save_resources(message, folder_name):
     """Sparar resurser och returnerar HTML-innehåll samt en lista över resurser."""
     resources = []
     html_content = ""
-    for part in parts:
-        headers = part["headers"]
-        content = part["content"]
+
+    for part in message.walk():
+        content_type = part.get_content_type()
+        content_disposition = part.get('Content-Disposition', None)
         
-        if headers["Content-Type"].startswith("text/html"):
-            html_content = content.decode()
-        elif headers["Content-Type"].startswith("image/"):
-            content_id = headers["Content-ID"].strip('<>')
+        if content_type == "text/html":
+            html_content = part.get_payload(decode=True).decode()
+        elif content_type.startswith("image/"):
+            content_id = part.get('Content-ID').strip('<>')
             image_name = f"{content_id}.jpeg"
             image_path = os.path.join(folder_name, image_name)
-            
-            if headers["Content-Type"].startswith("image/jpeg"):
+
+            if content_type == "image/jpeg":
                 with open(image_path, 'wb') as img_file:
-                    img_file.write(content)
+                    img_file.write(part.get_payload(decode=True))
             else:
-                image = Image.open(io.BytesIO(content))
+                image = Image.open(io.BytesIO(part.get_payload(decode=True)))
                 image = image.convert('RGB')  # Konvertera till RGB om det behövs
                 image.save(image_path, 'JPEG')
 
@@ -60,9 +62,9 @@ def convert_mhtml(file):
     create_folder(folder_name)
 
     with open(file, 'rb') as f:
-        parts = parse_mhtml(f)
+        message = BytesParser(policy=policy.default).parse(f)
 
-    html_content, resources = save_resources(parts, folder_name)
+    html_content, resources = save_resources(message, folder_name)
     adjusted_html_content = adjust_links(html_content, resources)
     save_html(adjusted_html_content, folder_name)
 
