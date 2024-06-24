@@ -4,6 +4,8 @@ pytesseract>=0.3.10,<0.4
 python-dotenv==1.0.1
 PyMuPDF>=1.2
 beautifulsoup4==4.12.3
+mhtml2html
 fitz==0.0.1.dev2
 openai==1.35.3
 traits>=6.4.3<6.5
+
