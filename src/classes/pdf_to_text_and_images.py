@@ -7,6 +7,20 @@ from io import BytesIO
 from typing import List, Dict, Any
 import logging
 
+"""
+This class provides functionality to convert PDF documents into HTML and JPEG images.
+It utilizes the PyMuPDF library to extract text and images from PDF pages and save them
+in the desired format. The extracted text elements and images are processed and stored
+in specified output directories.
+
+main method:
+- convert(pdf_path, output_folder): Converts the PDF document to HTML and JPEG images, saving them to the output folder.
+
+
+see also:
+- pdf_to_text_and_images.py - similar class for PDF conversion
+"""
+
 class PDFToTextAndImages:
     def __init__(self, logger: logging.Logger):
         self._logger = logger
