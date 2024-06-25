@@ -1,8 +1,11 @@
 import os
 import argparse
+import base64
 import logging
 from dotenv import load_dotenv
+from openai import OpenAI
 from classes.pdf_to_text_and_images import PDFToTextAndImages
+logger = None
 
 def setup_logger(log_level: int) -> logging.Logger:
     logger    = logging.getLogger("pdf_to_html_converter")
@@ -12,6 +15,19 @@ def setup_logger(log_level: int) -> logging.Logger:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     return logger
+
+def pdf_to_html_jpeg(pdf_path,output_folder):
+    global logger
+    converter = PDFToTextAndImages(logger)
+
+    # do it in two steps
+    logger.info(f"Starting PDF to HTML conversion of {pdf_path} in folder: {os.getcwd()}")
+    pages_elements   = converter.extract_images_and_text(pdf_path, output_folder)
+    output_html_path = os.path.join(output_folder, f"{output_folder}.html")
+
+    converter.generate_html(pages_elements, output_html_path)
+    logger.info(f"HTML file created at: {output_html_path}")
+
 
 def main() -> None:
     load_dotenv()  # Load variables from .env file
@@ -28,21 +44,14 @@ def main() -> None:
 
     # process file
     pdf_path      = args.pdf
-    base_name     = os.path.splitext(os.path.basename(pdf_path))[0]
-    output_folder = base_name
-
+    output_folder     = os.path.splitext(os.path.basename(pdf_path))[0]
+    
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    converter = PDFToTextAndImages(logger)
+    html,jpeg_list = pdf_to_html_jpeg(pdf_path,output_folder)
 
-    # do it in two steps
-    logger.info(f"Starting PDF to HTML conversion of {pdf_path} in folder: {os.getcwd()}")
-    pages_elements   = converter.extract_images_and_text(pdf_path, output_folder)
-    output_html_path = os.path.join(output_folder, f"{base_name}.html")
 
-    converter.generate_html(pages_elements, output_html_path)
-    logger.info(f"HTML file created at: {output_html_path}")
 
 if __name__ == "__main__":
     main()
