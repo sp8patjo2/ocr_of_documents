@@ -73,7 +73,8 @@ class AIImageProcessor:
         instructions = """Return a markdown with the texts in the image.
         Create a table with the layout, and each word at the approximate place in the table.
         If any word is highlighted in the image with a square make it bold in the markdown text.
-        Only return the markdown!
+        Only return the markdown. 
+        Please do not include any ```markdown or other other indications that this is markdown.
         """
         
         response = self.get_response(base64_image_url, instructions)
