@@ -63,6 +63,11 @@ def main() -> None:
     # process file
     pdf_path      = args.pdf
     output_folder     = os.path.splitext(os.path.basename(pdf_path))[0]
+    logger.info(f"Current working dir is: {os.getcwd()}")
+    logger.info(f"Will read file........: {pdf_path}")
+    logger.info(f"Output in folder......: {output_folder}")
+    debug = f"{os.getcwd()}/{pdf_path}"
+    logger.debug(f"borde då bli {debug}")
     
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
