@@ -3,28 +3,27 @@ import argparse
 import re
 import logging
 from dotenv import load_dotenv
-from openai import OpenAI
 from classes.pdf_to_text_and_images import PDFToTextAndImages
 from classes.ai_image_processor import AIImageProcessor
+
 logger = None
 
 def setup_logger(log_level: int) -> logging.Logger:
-    logger    = logging.getLogger("pdf_to_html_converter")
+    logger = logging.getLogger("pdf_to_html_converter")
     logger.setLevel(log_level)
-    handler   = logging.StreamHandler()
+    handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     return logger
 
 
-def pdf_to_html_jpeg(pdf_path,output_folder):
+def pdf_to_html_jpeg(pdf_path, output_folder):
     global logger
     converter = PDFToTextAndImages(logger)
 
-    # do it in two steps
     logger.info(f"Starting PDF to HTML conversion of {pdf_path} in folder: {os.getcwd()}")
-    pages_elements   = converter.extract_images_and_text(pdf_path, output_folder)
+    pages_elements = converter.extract_images_and_text(pdf_path, output_folder)
     output_html_path = os.path.join(output_folder, f"{output_folder}.html")
 
     converter.generate_html(pages_elements, output_html_path)
@@ -41,9 +40,50 @@ def jpeg_to_markdown(jpeg_directory):
         for file in files:
             if jpeg_pattern.match(file):
                 source_image = os.path.join(root, file)
-                output_file  = os.path.splitext(source_image)[0] + '.md'
+                output_file = os.path.splitext(source_image)[0] + '.md'
                 processor.process_image(source_image, output_file)
                 logger.info(f"AI-analyzing {source_image} - result is in {output_file}")
+
+
+def process_pdf_file(pdf_path):
+    output_folder = os.path.splitext(os.path.basename(pdf_path))[0]
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    pdf_to_html_jpeg(pdf_path, output_folder)
+    jpeg_to_markdown(output_folder)
+
+
+
+def process_pdf_directory(path):
+    unprocessed_files = []
+    pdf_pattern = re.compile(r'^.*\.pdf$', re.IGNORECASE)
+    
+    for file in os.listdir(path):
+        pdf_path = os.path.join(path, file)
+
+        if not os.path.isfile(pdf_path):
+            continue  # do not collect subfolders in unprocessed ... it's expected. NEXT
+        
+        if not pdf_pattern.match(file):
+            unprocessed_files.append(pdf_path)  # does not match PDF ... save to be able to inform user (last)
+            continue
+
+        # the actual processing
+        process_pdf_file(pdf_path)
+    
+    
+    # Done ... any messages to the end user?
+    if not unprocessed_files:
+        return
+    
+    logger.info("The following files were not processed:")
+    for file in unprocessed_files:
+        logger.info(file)
+    
+
+
 
 
 def main() -> None:
@@ -52,29 +92,29 @@ def main() -> None:
 
     # init setup logging - read level from .env. Level "warning" is fallback
     log_level_str = os.getenv('LOG_LEVEL', 'WARNING').upper()
-    log_level     = getattr(logging, log_level_str, logging.WARNING)
-    logger        = setup_logger(log_level)
+    log_level = getattr(logging, log_level_str, logging.WARNING)
+    logger = setup_logger(log_level)
 
     # parse arguments, there is a default file set
     parser = argparse.ArgumentParser(description="Convert PDF to HTML with extracted images.")
-    parser.add_argument("--pdf", default="images/test1.pdf", help="Path to the PDF file.")
-    args   = parser.parse_args()
+    parser.add_argument("--pdf", help="Path to the PDF file.")
+    parser.add_argument("--path", help="Path to the directory containing PDF files.")
+    args = parser.parse_args()
 
-    # process file
-    pdf_path      = args.pdf
-    output_folder     = os.path.splitext(os.path.basename(pdf_path))[0]
     logger.info(f"Current working dir is: {os.getcwd()}")
-    logger.info(f"Will read file........: {pdf_path}")
-    logger.info(f"Output in folder......: {output_folder}")
-    debug = f"{os.getcwd()}/{pdf_path}"
-    logger.debug(f"borde då bli {debug}")
-    
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
 
-    html_file = pdf_to_html_jpeg(pdf_path,output_folder)
-    jpeg_to_markdown(output_folder)
-    
+    args.path = 'Saljstartsinfo_test'
+
+    if args.pdf and args.path:
+        raise ValueError("Both --pdf and --path cannot be specified at the same time.")
+    elif args.path:
+        debug = f"{os.path.join(os.getcwd(), args.path)}"
+        logger.info(f"processning {debug}")
+        process_pdf_directory(args.path)
+    elif args.pdf:
+        process_pdf_file(args.pdf)
+    else:
+        logger.error("Either --pdf or --path must be specified.")
 
 
 if __name__ == "__main__":
