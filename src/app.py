@@ -37,7 +37,7 @@ def mhtml_to_html_jpeg(mhtml_path, output_folder):
     mhtml_to_html_converter = MHTMLToTextAndImages(logger)
 
     logger.info(f"Starting MHTML to HTML conversion of {mhtml_path} in folder: {os.getcwd()}")
-    output_html_path, pages_elements = mhtml_to_html_converter.convert(mhtml_path, output_folder)
+    output_html_path, _ = mhtml_to_html_converter.convert(mhtml_path, output_folder)
     
     logger.info(f"HTML file created at: {output_html_path}")
     return output_html_path
