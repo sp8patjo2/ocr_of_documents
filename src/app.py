@@ -5,6 +5,7 @@ import logging
 from dotenv import load_dotenv
 from classes.pdf_to_text_and_images import PDFToTextAndImages
 from classes.ai_image_processor import AIImageProcessor
+from classes.mhtml_to_text_and_images import MHTMLToTextAndImages
 
 logger = None
 
@@ -103,18 +104,24 @@ def main() -> None:
 
     logger.info(f"Current working dir is: {os.getcwd()}")
 
-    args.path = 'Saljstartsinfo_test'
+    args.path = 'Handdatorer'
 
     if args.pdf and args.path:
         raise ValueError("Both --pdf and --path cannot be specified at the same time.")
+    
     elif args.path:
         debug = f"{os.path.join(os.getcwd(), args.path)}"
         logger.info(f"processning {debug}")
         process_pdf_directory(args.path)
+                
     elif args.pdf:
         process_pdf_file(args.pdf)
+        
+        
     else:
         logger.error("Either --pdf or --path must be specified.")
+
+
 
 
 if __name__ == "__main__":
