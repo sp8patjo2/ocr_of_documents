@@ -3,8 +3,8 @@ import argparse
 import re
 import logging
 from dotenv import load_dotenv
-from classes.pdf_to_text_and_images import PDFToTextAndImages
-from classes.ai_image_processor import AIImageProcessor
+from classes.ai_image_processor       import AIImageProcessor
+from classes.pdf_to_text_and_images   import PDFToTextAndImages
 from classes.mhtml_to_text_and_images import MHTMLToTextAndImages
 
 logger = None
@@ -34,13 +34,11 @@ def pdf_to_html_jpeg(pdf_path, output_folder):
 
 def mhtml_to_html_jpeg(mhtml_path, output_folder):
     global logger
-    converter = MHTMLToTextAndImages(logger)
+    mhtml_to_html_converter = MHTMLToTextAndImages(logger)
 
     logger.info(f"Starting MHTML to HTML conversion of {mhtml_path} in folder: {os.getcwd()}")
-    pages_elements = converter.extract_images_and_text(mhtml_path, output_folder)
-    output_html_path = os.path.join(output_folder, f"{output_folder}.html")
-
-    converter.generate_html(pages_elements, output_html_path)
+    output_html_path, pages_elements = mhtml_to_html_converter.convert(mhtml_path, output_folder)
+    
     logger.info(f"HTML file created at: {output_html_path}")
     return output_html_path
 
@@ -114,7 +112,10 @@ def main() -> None:
 
     if args.pdf and args.path:
         raise ValueError("Both --pdf and --path cannot be specified at the same time.")
-    
+
+    if not args.path:
+        args.path = 'Handdatorer'
+        
     if not args.pdf and not args.path:
         logger.error("Either --pdf or --path must be specified.")
         return
